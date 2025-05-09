@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Mantenimiento de Mototaxis BAJAJ y TVS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="split-layout">
+            <div class="left-section">
+                <div class="image-frame">
+                    <img src="{{ url_for('static', filename='images/mototaxi_bienvenido_login.jpg') }}" alt="Mototaxi BAJAJ y TVS" class="mototaxi-image">
+                </div>
+                <h1 class="welcome-text">Mantenimiento de Mototaxis BAJAJ y TVS</h1>
+                <p class="slogan">Inicia sesión para gestionar tus vehículos</p>
+                <div class="triangle"></div>
+            </div>
+            <div class="right-section">
+                <h2>Iniciar Sesión</h2>
+                <form id="login-form" class="form-card">
+                    <div class="form-group">
+                        <label for="username">Usuario:</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn">Iniciar Sesión</button>
+                    </div>
+                </form>
+                <p class="login-link">¿No tienes cuenta? <a href="/">Regístrate aquí</a></p>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>

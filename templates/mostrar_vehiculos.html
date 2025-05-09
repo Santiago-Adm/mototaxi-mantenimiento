@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Vehículos - Mantenimiento de Mototaxis BAJAJ y TVS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Lista de Vehículos</h1>
+        
+        <!-- Botón para volver a la página principal -->
+        <section class="card">
+            <a href="/" class="btn">Volver al Formulario</a>
+        </section>
+        
+        <!-- Lista de vehículos -->
+        <section id="vehicle-list" class="card">
+            <h2>Vehículos Registrados <button id="refresh-btn" class="btn refresh">🔄 Actualizar</button></h2>
+            <div id="vehicles-container" class="vehicles-grid"></div>
+        </section>
+    </div>
+    <script src="{{ url_for('static', filename='js/mostrar_vehiculos.js') }}"></script>
+</body>
+</html>

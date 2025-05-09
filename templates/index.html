@@ -3,41 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Mantenimiento - Mototaxis</title>
+    <title>Mantenimiento de Mototaxis BAJAJ y TVS</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Gestión de Mantenimiento de Mototaxis</h1>
-        
-        <!-- Formulario para agregar vehículo -->
-        <section id="add-vehicle">
-            <h2>Agregar Vehículo</h2>
-            <form id="vehicle-form">
-                <label for="license_plate">Placa:</label>
-                <input type="text" id="license_plate" name="license_plate" required>
-                <label for="owner_name">Propietario:</label>
-                <input type="text" id="owner_name" name="owner_name" required>
-                <label for="model">Modelo:</label>
-                <input type="text" id="model" name="model" required>
-                <button type="submit">Agregar</button>
-            </form>
-        </section>
-        
-        <!-- Lista de vehículos -->
-        <section id="vehicle-list">
-            <h2>Lista de Vehículos</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Placa</th>
-                        <th>Propietario</th>
-                        <th>Modelo</th>
-                    </tr>
-                </thead>
-                <tbody id="vehicles-table-body"></tbody>
-            </table>
-        </section>
+        <div class="split-layout">
+            <div class="left-section">
+                <div class="image-frame">
+                    <img src="{{ url_for('static', filename='images/mototaxi_bienvenido.jpg') }}" alt="Mototaxi BAJAJ y TVS" class="mototaxi-image">
+                </div>
+                <h1 class="welcome-text">Mantenimiento de Mototaxis BAJAJ y TVS</h1>
+            </div>
+            <div class="right-section">
+                <h2>Registrar Nuevo Vehículo</h2>
+                <form id="vehicle-form" class="form-card">
+                    <div class="form-group">
+                        <label for="last_names">Apellidos Completos:</label>
+                        <input type="text" id="last_names" name="last_names" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="first_names">Nombres Completos:</label>
+                        <input type="text" id="first_names" name="first_names" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dni">DNI:</label>
+                        <input type="text" id="dni" name="dni" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="license_plate">Número de Placa:</label>
+                        <input type="text" id="license_plate" name="license_plate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="model">Modelo de Vehículo:</label>
+                        <input type="text" id="model" name="model" required>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn">Agregar</button>
+                        <a href="/login" class="btn access-btn">Ingresar</a>
+                    </div>
+                </form>
+                <div class="exclusive-button">
+                    <a href="/mostrar-vehiculos" class="btn exclusive-btn">Ingreso Exclusiva</a>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
