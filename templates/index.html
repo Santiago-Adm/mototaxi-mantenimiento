@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Mantenimiento - Mototaxis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Gestión de Mantenimiento de Mototaxis</h1>
+        
+        <!-- Formulario para agregar vehículo -->
+        <section id="add-vehicle">
+            <h2>Agregar Vehículo</h2>
+            <form id="vehicle-form">
+                <label for="license_plate">Placa:</label>
+                <input type="text" id="license_plate" name="license_plate" required>
+                <label for="owner_name">Propietario:</label>
+                <input type="text" id="owner_name" name="owner_name" required>
+                <label for="model">Modelo:</label>
+                <input type="text" id="model" name="model" required>
+                <button type="submit">Agregar</button>
+            </form>
+        </section>
+        
+        <!-- Lista de vehículos -->
+        <section id="vehicle-list">
+            <h2>Lista de Vehículos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th>Propietario</th>
+                        <th>Modelo</th>
+                    </tr>
+                </thead>
+                <tbody id="vehicles-table-body"></tbody>
+            </table>
+        </section>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
