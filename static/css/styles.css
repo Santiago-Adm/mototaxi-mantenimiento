@@ -197,3 +197,57 @@ input:focus {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+
+/* Agregar esto al final del archivo CSS existente */
+
+/* Estilos específicos para la página de login */
+.login-page .left-section {
+    background: rgba(0, 0, 0, 0.3); /* Fondo más oscuro para mejor contraste */
+}
+
+.login-page .slogan {
+    font-size: 1.5em;
+    color: #fff;
+    text-align: center;
+    margin: 20px 0;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+    animation: fadeIn 2s ease-in;
+}
+
+.login-page .triangle {
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-top: 30px solid rgba(255, 255, 255, 0.2);
+    margin: 30px auto;
+    animation: bounce 2s infinite;
+}
+
+.login-page .login-link {
+    text-align: center;
+    margin-top: 20px;
+    color: #bdc3c7;
+    font-size: 0.9em;
+}
+
+.login-page .login-link a {
+    color: #2ecc71;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.login-page .login-link a:hover {
+    color: #27ae60;
+    text-decoration: underline;
+}
+
+/* Animación adicional para el triángulo */
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
