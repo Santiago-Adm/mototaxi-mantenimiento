@@ -3,24 +3,29 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 
-# Cargar variables de entorno (opcional localmente, no en producción)
-load_dotenv()  # Esto solo se usa si pruebas localmente
+# Cargar variables de entorno
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+print("Archivo .env cargado:", os.path.exists(os.path.join(os.path.dirname(__file__), '.env')))
+print("POSTGRES_HOST:", os.getenv('POSTGRES_HOST'))
+print("POSTGRES_USER:", os.getenv('POSTGRES_USER'))
+print("POSTGRES_PASSWORD:", os.getenv('POSTGRES_PASSWORD'))
+print("POSTGRES_DB:", os.getenv('POSTGRES_DB'))
+print("POSTGRES_PORT:", os.getenv('POSTGRES_PORT'))
 
 app = Flask(__name__)
 
-# Configuración de la conexión a Azure PostgreSQL
+# Configuración de la conexión a PostgreSQL
 db_params = {
-    'dbname': os.getenv('POSTGRES_DB', 'mototaxi-application-01-database'),
-    'user': os.getenv('POSTGRES_USER', 'yxascysndu@mototaxi-aplication-01-server'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'clFcM$u4V2RtI$t$k'),
-    'host': os.getenv('POSTGRES_HOST', 'mototaxi-aplication-01-server.postgres.database.azure.com'),
-    'port': os.getenv('POSTGRES_PORT', '5432'),
-    'sslmode': 'require'
+    'host': os.getenv('POSTGRES_HOST', 'localhost'),
+    'user': os.getenv('POSTGRES_USER', 'postgres'),
+    'password': os.getenv('POSTGRES_PASSWORD'),
+    'dbname': os.getenv('POSTGRES_DB', 'vehiculos_db'),
+    'port': os.getenv('POSTGRES_PORT', '5432')
 }
 
 def get_db_connection():
+    print("Conectando con:", db_params)
     return psycopg2.connect(**db_params)
-
 @app.route('/')
 def index():
     return render_template('index.html')

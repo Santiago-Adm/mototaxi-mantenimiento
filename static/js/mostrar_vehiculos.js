@@ -2,7 +2,12 @@ async function loadVehicles() {
     try {
         const response = await fetch('/api/vehicles');
         const vehicles = await response.json();
-        const container = document.getElementById('vehicles-container');
+        const container = document.getElementById('vehicles-container'); // Usa el contenedor correcto
+        if (!container) {
+            console.error('Contenedor vehicles-container no encontrado');
+            alert('Error: No se pudo encontrar el contenedor de vehículos.');
+            return;
+        }
         container.innerHTML = '';
         vehicles.forEach(vehicle => {
             const card = document.createElement('div');
@@ -17,6 +22,7 @@ async function loadVehicles() {
             container.appendChild(card);
         });
     } catch (error) {
+        console.error('Error al cargar los vehículos:', error);
         alert('Error al cargar los vehículos: ' + error.message);
     }
 }

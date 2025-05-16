@@ -1,0 +1,56 @@
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Credenciales y certificados
+*.pem
+*.crt
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyd
+*.pyo
+*.so
+.Python
+venv/
+env/
+.venv/
+
+# Editor y IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Base de datos
+*.db
+*.sqlite3
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs y archivos generados
+*.log
+logs/
+
+# Archivos de despliegue
+instance/
+.webassets-cache
+
+# Archivos de Azure
+.azure/
+# Azure PostgreSQL
+/config.py
+/connection_string.txt
+/azure_credentials.json
+# Azure PostgreSQL Flexible Server
+POSTGRES_HOST=mototaxis-db.postgres.database.azure.com
+POSTGRES_USER=mototaxisadmin
+POSTGRES_PASSWORD=contraseña_segura_12  # ¡Cambia esto por una contraseña más compleja!
+POSTGRES_DB=postgres  # O el nombre de tu BD si no es la predeterminada
+POSTGRES_PORT=5432
