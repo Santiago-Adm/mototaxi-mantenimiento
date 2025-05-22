@@ -30,8 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     model: model 
                 })
             });
+            
             if (response.ok) {
-                alert('Vehículo agregado exitosamente');
+                const result = await response.json();
+                alert(`Vehículo agregado exitosamente\n\nTus credenciales de acceso son:\nUsuario: ${result.credentials.username}\nContraseña: ${result.credentials.password}\n\nGuárdalas para iniciar sesión.`);
                 form.reset();
             } else {
                 const error = await response.json();

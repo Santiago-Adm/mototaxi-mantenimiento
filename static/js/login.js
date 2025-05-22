@@ -1,14 +1,31 @@
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
 
     try {
-        // Aquí iría la lógica de autenticación (por ejemplo, una llamada a un endpoint /api/login)
-        alert('Inicio de sesión en desarrollo. Usuario: ' + username);
-        // Redirigir a /mostrar-vehiculos tras autenticación exitosa (a implementar)
-        // window.location.href = '/mostrar-vehiculos';
+        console.log("Enviando credenciales a /api/login");
+        const response = await fetch('http://localhost:5000/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password })
+        });
+
+        console.log("Respuesta recibida:", response);
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error desconocido');
+        }
+
+        const data = await response.json();
+        alert(data.message);
+        window.location.href = '/mostrar-vehiculos';
+        
     } catch (error) {
-        alert('Error al iniciar sesión: ' + error.message);
+        console.error("Error completo:", error);
+        alert('Error: ' + error.message);
     }
 });

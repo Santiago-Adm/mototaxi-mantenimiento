@@ -31,7 +31,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/login')
-def login():
+def login_page():
     return render_template('login.html', page_class='login-page')
 
 @app.route('/mostrar-vehiculos')
@@ -44,14 +44,37 @@ def add_vehicle():
         data = request.get_json()
         if not all(k in data for k in ['last_names', 'first_names', 'dni', 'license_plate', 'model']):
             return jsonify({'error': 'Faltan campos requeridos'}), 400
+        
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
+                # Insertar vehículo
                 cursor.execute(
-                    "INSERT INTO Vehiculos (last_names, first_names, dni, license_plate, model) VALUES (%s, %s, %s, %s, %s)",
+                    "INSERT INTO Vehiculos (last_names, first_names, dni, license_plate, model) VALUES (%s, %s, %s, %s, %s) RETURNING id",
                     (data['last_names'], data['first_names'], data['dni'], data['license_plate'], data['model'])
                 )
+                vehicle_id = cursor.fetchone()[0]
+                
+                # Crear usuario automático
+                username = f"{data['first_names'].lower().split()[0]}{data['dni'][-4:]}"
+                password = data['license_plate'].lower().replace("-", "")
+                email = f"{username}@mototaxi.com"  # Email ficticio
+                
+                # Insertar usuario (password_hash es igual al password en texto plano por simplicidad)
+                cursor.execute(
+                    "INSERT INTO usuario (username, password_hash, email) VALUES (%s, %s, %s)",
+                    (username, password, email)  # En producción deberías hashear la contraseña
+                )
+                
                 conn.commit()
-        return jsonify({'message': 'Vehículo agregado exitosamente'}), 201
+                
+        return jsonify({
+            'message': 'Vehículo agregado exitosamente',
+            'credentials': {
+                'username': username,
+                'password': password
+            }
+        }), 201
+        
     except psycopg2.Error as e:
         return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
     except Exception as e:
@@ -77,3 +100,39 @@ def get_vehicles():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+@app.route('/api/login', methods=['POST'])
+def api_login():  # ¡Nombre diferente a la ruta /login!
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Datos no proporcionados'}), 400
+            
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            return jsonify({'error': 'Usuario y contraseña requeridos'}), 400
+            
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id FROM usuario WHERE username = %s AND password_hash = %s",
+                    (username, password)
+                )
+                user = cursor.fetchone()
+                
+                if user:
+                    return jsonify({'message': 'Autenticación exitosa'}), 200
+                else:
+                    return jsonify({'error': 'Credenciales inválidas'}), 401
+                    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    response.headers.add('Access-Control-Allow-Methods', 'POST')
+    return response
