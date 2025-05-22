@@ -1,15 +1,35 @@
 import psycopg2
+from psycopg2 import pool
 
+# Configuración para Azure PostgreSQL
+azure_db_params = {
+    "host": "mototaxi-aplication.postgres.database.azure.com",
+    "database": "postgres",
+    "user": "kkecjzsbkx",
+    "password": "contraseña_segura_12",
+    "port": "5432",
+    "sslmode": "require"
+}
+
+# Pool de conexiones
 try:
-    cnx = psycopg2.connect(
-        user="yxascysndu@mototaxi-aplication-01-server",  # Formato usuario@servidor
-        password="MiContraseña123",  # Tu contraseña
-        host="mototaxi-aplication-01-server.postgres.database.azure.com",
-        port=5432,
-        database="mototaxi-aplication-01-database",  # Nombre de la base de datos
-        sslmode="require"  # Requerido por Azure
+    connection_pool = psycopg2.pool.SimpleConnectionPool(
+        minconn=1,
+        maxconn=10,
+        **azure_db_params
     )
-    print("Conexión exitosa!")
-    cnx.close()
+    print("Pool de conexiones creado correctamente.")
 except psycopg2.Error as e:
-    print(f"Error al conectar: {e}")
+    print(f"Error al crear el pool: {e}")
+
+# Funciones (nivel raíz, sin indentación extra)
+def get_db_connection():
+    try:
+        return connection_pool.getconn()
+    except psycopg2.Error as e:
+        print(f"Error al obtener conexión: {e}")
+        return None
+
+def return_db_connection(conn):
+    if conn:
+        connection_pool.putconn(conn)
