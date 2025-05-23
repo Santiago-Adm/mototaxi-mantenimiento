@@ -3,6 +3,7 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 from connect_db import DBConnection
+import time
 
 # Cargar variables de entorno
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
@@ -71,6 +72,28 @@ def db_status():
         return f"PostgreSQL {version[0]}", 200
     except Exception as e:
         return f"Error: {str(e)}", 500
+    
+@app.route('/db-check')
+def db_check():
+    try:
+        start_time = time.time()
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT version()")
+                version = cur.fetchone()
+                cur.execute("SELECT COUNT(*) FROM vehiculos")  # Ajusta según tu esquema
+                count = cur.fetchone()
+        return jsonify({
+            "status": "success",
+            "postgres_version": version[0],
+            "row_count": count[0],
+            "response_time": f"{(time.time() - start_time):.2f}s"
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 @app.route('/')
 def index():
