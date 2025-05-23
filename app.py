@@ -168,7 +168,8 @@ def get_vehicles():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    from waitress import serve
+    serve(app, host='0.0.0.0', port=8000)
 
 @app.route('/api/login', methods=['POST'])
 def api_login():  # ¡Nombre diferente a la ruta /login!
