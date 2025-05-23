@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 import psycopg2
 import os
 from dotenv import load_dotenv
+from connect_db import DBConnection
 
 # Cargar variables de entorno
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
@@ -23,9 +24,29 @@ db_params = {
     'port': os.getenv('POSTGRES_PORT', '5432')
 }
 
+# Modifica get_db_connection() en app.py
 def get_db_connection():
-    print("Conectando con:", db_params)
-    return psycopg2.connect(**db_params)
+    conn = psycopg2.connect(
+        host=os.getenv('POSTGRES_HOST'),
+        user=os.getenv('POSTGRES_USER'),
+        password=os.getenv('POSTGRES_PASSWORD'),
+        dbname=os.getenv('POSTGRES_DB'),
+        port=os.getenv('POSTGRES_PORT'),
+        sslmode='require',
+        connect_timeout=10  # Añade timeout explícito
+    )
+    return conn
+
+@app.route('/test-connection')
+def test_connection():
+    try:
+        with DBConnection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT version()")
+                version = cur.fetchone()
+        return f"PostgreSQL {version[0]}", 200
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 @app.route('/')
 def index():
     return render_template('index.html')
