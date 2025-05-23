@@ -60,6 +60,17 @@ def test_db():
         return "No hay conexión a la DB", 500
     except Exception as e:
         return f"Error: {str(e)}", 500
+    
+@app.route('/db-status')
+def db_status():
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT version()")
+                version = cur.fetchone()
+        return f"PostgreSQL {version[0]}", 200
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 @app.route('/')
 def index():
