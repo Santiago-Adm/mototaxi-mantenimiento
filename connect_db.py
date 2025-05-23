@@ -3,6 +3,8 @@ import psycopg2
 from psycopg2 import pool, OperationalError
 import logging
 
+from app import get_db_connection
+
 # Configura logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,21 +34,17 @@ class DBConnection:
                 logger.error(f"Error al devolver conexión: {e}")
 
 # Resto de tus funciones (get_db_connection, return_db_connection, etc.)
-def get_db_connection():
-    """Obtiene conexión del pool"""
-    try:
-        conn = psycopg2.connect(
-            host=os.getenv('POSTGRES_HOST'),
-            database=os.getenv('POSTGRES_DB'),
-            user=f"{os.getenv('POSTGRES_USER')}@{os.getenv('POSTGRES_HOST').split('.')[0]}",
-            password=os.getenv('POSTGRES_PASSWORD'),
-            port=os.getenv('POSTGRES_PORT', '5432'),
-            sslmode='require'
-        )
-        return conn
-    except OperationalError as e:
-        logger.error(f"Error de conexión: {e}")
-        return None
+def get_db_config():
+    """Configuración única para Private Endpoint"""
+    return {
+        "host": os.getenv('POSTGRES_HOST'),
+        "database": os.getenv('POSTGRES_DB'),
+        "user": os.getenv('POSTGRES_USER'),  # Ya incluye @servidor
+        "password": os.getenv('POSTGRES_PASSWORD'),
+        "port": os.getenv('POSTGRES_PORT'),
+        "sslmode": os.getenv('POSTGRES_SSL'),
+        "connect_timeout": 10
+    }
 
 def return_db_connection(conn):
     """Devuelve conexión de forma segura"""
