@@ -1,208 +1,143 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
 import psycopg2
 import os
 from dotenv import load_dotenv
-from connect_db import DBConnection
-import time
+import psycopg2.extras
+from functools import wraps
 
 # Cargar variables de entorno
-load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
-print("Archivo .env cargado:", os.path.exists(os.path.join(os.path.dirname(__file__), '.env')))
-print("POSTGRES_HOST:", os.getenv('POSTGRES_HOST'))
-print("POSTGRES_USER:", os.getenv('POSTGRES_USER'))
-print("POSTGRES_PASSWORD:", os.getenv('POSTGRES_PASSWORD'))
-print("POSTGRES_DB:", os.getenv('POSTGRES_DB'))
-print("POSTGRES_PORT:", os.getenv('POSTGRES_PORT'))
+load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
-# Configuración de la conexión a PostgreSQL
-db_params = {
-    'host': os.getenv('POSTGRES_HOST', 'localhost'),
-    'user': os.getenv('POSTGRES_USER', 'postgres'),
-    'password': os.getenv('POSTGRES_PASSWORD'),
-    'dbname': os.getenv('POSTGRES_DB', 'vehiculos_db'),
-    'port': os.getenv('POSTGRES_PORT', '5432')
-}
-
-# Modifica get_db_connection() en app.py
 def get_db_connection():
-    conn = psycopg2.connect(
-        host=os.getenv('POSTGRES_HOST'),
-        user=os.getenv('POSTGRES_USER'),
-        password=os.getenv('POSTGRES_PASSWORD'),
-        dbname=os.getenv('POSTGRES_DB'),
-        port=os.getenv('POSTGRES_PORT'),
-        sslmode='require',
-        connect_timeout=10  # Añade timeout explícito
-    )
-    return conn
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv('POSTGRES_HOST'),
+            user=os.getenv('POSTGRES_USER'),
+            password=os.getenv('POSTGRES_PASSWORD'),
+            dbname=os.getenv('POSTGRES_DB'),
+            port=os.getenv('POSTGRES_PORT')
+        )
+        return conn
+    except Exception as e:
+        print(f"Error de conexión: {e}")
+        return None
 
-@app.route('/test-connection')
-def test_connection():
-    try:
-        with DBConnection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT version()")
-                version = cur.fetchone()
-        return f"PostgreSQL {version[0]}", 200
-    except Exception as e:
-        return f"Error: {str(e)}", 500
-
-@app.route('/test-db')
-def test_db():
-    try:
-        conn = get_db_connection()
-        if conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT version()")
-                version = cur.fetchone()
-            return f"PostgreSQL {version[0]}", 200
-        return "No hay conexión a la DB", 500
-    except Exception as e:
-        return f"Error: {str(e)}", 500
-    
-@app.route('/db-status')
-def db_status():
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT version()")
-                version = cur.fetchone()
-        return f"PostgreSQL {version[0]}", 200
-    except Exception as e:
-        return f"Error: {str(e)}", 500
-    
-@app.route('/db-check')
-def db_check():
-    try:
-        start_time = time.time()
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT version()")
-                version = cur.fetchone()
-                cur.execute("SELECT COUNT(*) FROM vehiculos")  # Ajusta según tu esquema
-                count = cur.fetchone()
-        return jsonify({
-            "status": "success",
-            "postgres_version": version[0],
-            "row_count": count[0],
-            "response_time": f"{(time.time() - start_time):.2f}s"
-        })
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login_page'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return redirect(url_for('login_page'))
 
 @app.route('/login')
 def login_page():
-    return render_template('login.html', page_class='login-page')
+    if 'user_id' in session:
+        return redirect(url_for('mostrar_vehiculos'))
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
+
+@app.route('/registro')
+def registro_page():
+    return render_template('registro.html')
 
 @app.route('/mostrar-vehiculos')
+@login_required
 def mostrar_vehiculos():
     return render_template('mostrar_vehiculos.html')
 
-@app.route('/api/vehicles', methods=['POST'])
-def add_vehicle():
+@app.route('/api/login', methods=['POST'])
+def login():
     try:
         data = request.get_json()
-        if not all(k in data for k in ['last_names', 'first_names', 'dni', 'license_plate', 'model']):
-            return jsonify({'error': 'Faltan campos requeridos'}), 400
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            return jsonify({"error": "Usuario y contraseña son requeridos"}), 400
+
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT * FROM usuario WHERE username = %s", (username,))
+                user = cur.fetchone()
+
+                if user and check_password_hash(user['password_hash'], password):
+                    session['user_id'] = user['id']
+                    session['username'] = user['username']
+                    return jsonify({"message": "Login exitoso"}), 200
+                
+                return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+
+    except Exception as e:
+        print(f"Login error: {str(e)}")
+        return jsonify({"error": "Error interno del servidor"}), 500
+
+@app.route('/api/registro', methods=['POST'])
+def registro():
+    try:
+        data = request.get_json()
+        password_hash = generate_password_hash(data['password'])
         
         with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                # Insertar vehículo
-                cursor.execute(
-                    "INSERT INTO Vehiculos (last_names, first_names, dni, license_plate, model) VALUES (%s, %s, %s, %s, %s) RETURNING id",
-                    (data['last_names'], data['first_names'], data['dni'], data['license_plate'], data['model'])
-                )
-                vehicle_id = cursor.fetchone()[0]
-                
-                # Crear usuario automático
-                username = f"{data['first_names'].lower().split()[0]}{data['dni'][-4:]}"
-                password = data['license_plate'].lower().replace("-", "")
-                email = f"{username}@mototaxi.com"  # Email ficticio
-                
-                # Insertar usuario (password_hash es igual al password en texto plano por simplicidad)
-                cursor.execute(
-                    "INSERT INTO usuario (username, password_hash, email) VALUES (%s, %s, %s)",
-                    (username, password, email)  # En producción deberías hashear la contraseña
-                )
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO usuario (username, password_hash, email)
+                    VALUES (%s, %s, %s)
+                    RETURNING id
+                """, (data['username'], password_hash, data['email']))
+                user_id = cur.fetchone()[0]
+
+                # Registro del vehículo si se proporcionan los datos
+                if 'vehicle' in data:
+                    vehicle = data['vehicle']
+                    cur.execute("""
+                        INSERT INTO vehiculos (last_names, first_names, dni, license_plate, model)
+                        VALUES (%s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (vehicle['last_names'], vehicle['first_names'], 
+                          vehicle['dni'], vehicle['license_plate'], vehicle['model']))
+                    vehicle_id = cur.fetchone()[0]
                 
                 conn.commit()
+                return jsonify({
+                    "message": "Registro exitoso",
+                    "id": user_id
+                }), 201
                 
-        return jsonify({
-            'message': 'Vehículo agregado exitosamente',
-            'credentials': {
-                'username': username,
-                'password': password
-            }
-        }), 201
-        
-    except psycopg2.Error as e:
-        return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
+    except psycopg2.IntegrityError:
+        return jsonify({"error": "El usuario o email ya existe"}), 409
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/vehicles', methods=['GET'])
 def get_vehicles():
     try:
         with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM Vehiculos")
-                rows = cursor.fetchall()
-                vehicles = [
-                    {'id': row[0], 'last_names': row[1], 'first_names': row[2], 'dni': row[3],
-                     'license_plate': row[4], 'model': row[5]}
-                    for row in rows
-                ]
-        return jsonify(vehicles), 200
-    except psycopg2.Error as e:
-        return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT id, last_names, first_names, dni, license_plate, model 
+                    FROM vehiculos 
+                    ORDER BY id DESC
+                """)
+                vehicles = cur.fetchall()
+                return jsonify(vehicles)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    from waitress import serve
-    serve(app, host='0.0.0.0', port=8000)
-
-@app.route('/api/login', methods=['POST'])
-def api_login():  # ¡Nombre diferente a la ruta /login!
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'Datos no proporcionados'}), 400
-            
-        username = data.get('username')
-        password = data.get('password')
-        
-        if not username or not password:
-            return jsonify({'error': 'Usuario y contraseña requeridos'}), 400
-            
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT id FROM usuario WHERE username = %s AND password_hash = %s",
-                    (username, password)
-                )
-                user = cursor.fetchone()
-                
-                if user:
-                    return jsonify({'message': 'Autenticación exitosa'}), 200
-                else:
-                    return jsonify({'error': 'Credenciales inválidas'}), 401
-                    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    response.headers.add('Access-Control-Allow-Methods', 'POST')
-    return response
+    app.run(debug=True)

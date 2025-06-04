@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Sistema de Mototaxis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="split-container">
+        <div class="right-panel">
+            <div class="registro-form">
+                <h2>REGISTRO</h2>
+                <!-- Add logo container after title -->
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='images/mototaxi_bienvenido.jpg') }}" alt="Logo" class="logo">
+                </div>
+                <form id="registroForm">
+                    <div class="form-tabs">
+                        <div class="form-section">
+                            <h3>Datos de Usuario</h3>
+                            <div class="form-group">
+                                <input type="text" id="username" placeholder="Usuario" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" id="password" placeholder="Contraseña" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="email" id="email" placeholder="Email" required>
+                            </div>
+                        </div>
+                        <div class="form-section">
+                            <h3>Datos del Vehículo</h3>
+                            <div class="form-group">
+                                <input type="text" id="last_names" placeholder="Apellidos" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="first_names" placeholder="Nombres" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="dni" placeholder="DNI" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="license_plate" placeholder="Placa" required>
+                            </div>
+                            <div class="form-group">
+                                <div class="model-selector">
+                                    <label>Selecciona el modelo:</label>
+                                    <div class="model-buttons">
+                                        <button type="button" class="model-btn bajaj" data-model="BAJAJ">BAJAJ</button>
+                                        <button type="button" class="model-btn tvs" data-model="TVS">TVS</button>
+                                    </div>
+                                    <input type="hidden" id="model" name="model" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Replace the old button with new button container -->
+                    <div class="form-buttons">
+                        <a href="{{ url_for('login_page') }}" class="btn-back">Regresar</a>
+                        <button type="submit" class="btn-register">Registrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/registro.js') }}" defer></script>
+</body>
+</html>
