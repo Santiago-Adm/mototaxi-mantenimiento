@@ -83,4 +83,3 @@ jobs:
           app-name: 'mototaxi-aplication'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_760E4D54583A4AFCBDCA916984AFEA9D }}
-          startup-command: 'gunicorn --bind=0.0.0.0 --timeout 600 app:app'
