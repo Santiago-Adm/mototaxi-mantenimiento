@@ -26,15 +26,19 @@ app.config.update(
 
 def get_db_connection():
     try:
-        # Azure SQL Database connection
-        conn = psycopg2.connect(
-            host=os.getenv('POSTGRES_HOST'),
-            database=os.getenv('POSTGRES_DB'),
-            user=os.getenv('POSTGRES_USER'),
-            password=os.getenv('POSTGRES_PASSWORD'),
-            port=os.getenv('POSTGRES_PORT'),
-            sslmode='require'  # Required for Azure SQL
+        # Log connection attempt
+        logger.info(f"Attempting to connect to {os.getenv('POSTGRES_HOST')}")
+        
+        conn_string = (
+            f"host={os.getenv('POSTGRES_HOST')} "
+            f"dbname={os.getenv('POSTGRES_DB')} "
+            f"user={os.getenv('POSTGRES_USER')}@motitodatabase "  # Add server name after @
+            f"password={os.getenv('POSTGRES_PASSWORD')} "
+            f"port={os.getenv('POSTGRES_PORT')} "
+            "sslmode=require"
         )
+        conn = psycopg2.connect(conn_string)
+        logger.info("Database connection successful")
         return conn
     except Exception as e:
         logger.error(f"Database connection error: {e}")
@@ -161,6 +165,30 @@ def test_db():
         return jsonify({"status": "error", "message": "Could not establish database connection"}), 500
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/test-connection')
+def test_connection():
+    try:
+        conn = get_db_connection()
+        if conn:
+            with conn.cursor() as cur:
+                cur.execute('SELECT 1')
+                result = cur.fetchone()
+                conn.close()
+                return jsonify({
+                    "status": "success",
+                    "message": "Conexión exitosa a la base de datos",
+                    "result": result[0]
+                })
+        return jsonify({
+            "status": "error",
+            "message": "No se pudo establecer la conexión"
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('WEBSITES_PORT', 8000))
