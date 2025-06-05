@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import psycopg2.extras
 from functools import wraps
 import logging
+import pyodbc  # Add this import at the top
 
 # Load environment variables
 load_dotenv()
@@ -27,21 +28,30 @@ app.config.update(
 def get_db_connection():
     try:
         # Log connection attempt
-        logger.info(f"Attempting to connect to {os.getenv('POSTGRES_HOST')}")
+        logger.info("Attempting to connect to database...")
         
-        conn_string = (
-            f"host={os.getenv('POSTGRES_HOST')} "
-            f"dbname={os.getenv('POSTGRES_DB')} "
-            f"user={os.getenv('POSTGRES_USER')}@motitodatabase "  # Add server name after @
-            f"password={os.getenv('POSTGRES_PASSWORD')} "
-            f"port={os.getenv('POSTGRES_PORT')} "
-            "sslmode=require"
-        )
-        conn = psycopg2.connect(conn_string)
+        # Get connection string from environment variable
+        conn_string = os.getenv('SQL_CONNECTION_STRING')
+        
+        # Add driver if not present
+        if "Driver=" not in conn_string:
+            conn_string = "Driver={ODBC Driver 17 for SQL Server};" + conn_string
+        
+        # Create connection using pyodbc
+        conn = pyodbc.connect(conn_string)
+        
+        # Test connection
+        with conn.cursor() as cur:
+            cur.execute('SELECT 1')
+            cur.fetchone()
+        
         logger.info("Database connection successful")
         return conn
-    except Exception as e:
+    except pyodbc.Error as e:
         logger.error(f"Database connection error: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
         return None
 
 def login_required(f):
