@@ -22,6 +22,7 @@ pycparser==2.22
 PyJWT==2.10.1
 python-dotenv==1.1.0
 requests==2.32.3
+pyodbc==4.0.39
 six==1.17.0
 typing_extensions==4.13.2
 urllib3==2.4.0

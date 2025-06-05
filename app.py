@@ -192,20 +192,14 @@ def test_db():
 def test_connection():
     try:
         conn = get_db_connection()
-        if conn:
-            with conn.cursor() as cur:
-                cur.execute('SELECT 1')
-                result = cur.fetchone()
-                conn.close()
-                return jsonify({
-                    "status": "success",
-                    "message": "Conexión exitosa a la base de datos",
-                    "result": result[0]
-                })
+        with conn.cursor() as cursor:
+            cursor.execute('SELECT @@version')
+            version = cursor.fetchone()[0]
         return jsonify({
-            "status": "error",
-            "message": "No se pudo establecer la conexión"
-        }), 500
+            "status": "success",
+            "message": "Conexión exitosa a la base de datos",
+            "version": version
+        })
     except Exception as e:
         return jsonify({
             "status": "error",
