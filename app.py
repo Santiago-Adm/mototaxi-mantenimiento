@@ -151,7 +151,17 @@ def get_vehicles():
         logger.error(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/test-db')
+def test_db():
+    try:
+        conn = get_db_connection()
+        if conn:
+            conn.close()
+            return jsonify({"status": "success", "message": "Database connection successful"})
+        return jsonify({"status": "error", "message": "Could not establish database connection"}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('WEBSITES_PORT', 8000))
     app.run(host='0.0.0.0', port=port)
-gunicorn --bind=0.0.0.0 --timeout 600 app:app
