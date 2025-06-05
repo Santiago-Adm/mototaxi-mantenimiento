@@ -1,6 +1,7 @@
 # Environment variables
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
 
 # Python
@@ -27,10 +28,17 @@ var/
 .installed.cfg
 *.egg
 
-# VS Code
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# IDE files
 .vscode/
-*.code-workspace
-.history
+.idea/
 
 # Operating System
 .DS_Store

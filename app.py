@@ -5,27 +5,39 @@ import os
 from dotenv import load_dotenv
 import psycopg2.extras
 from functools import wraps
+import logging
 
-# Cargar variables de entorno
+# Load environment variables
 load_dotenv()
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.secret_key = os.getenv('SECRET_KEY')
+
+# Azure-specific configurations
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax'
+)
 
 def get_db_connection():
     try:
+        # Azure SQL Database connection
         conn = psycopg2.connect(
             host=os.getenv('POSTGRES_HOST'),
+            database=os.getenv('POSTGRES_DB'),
             user=os.getenv('POSTGRES_USER'),
             password=os.getenv('POSTGRES_PASSWORD'),
-            dbname=os.getenv('POSTGRES_DB'),
-            port=os.getenv('POSTGRES_PORT')
+            port=os.getenv('POSTGRES_PORT'),
+            sslmode='require'  # Required for Azure SQL
         )
         return conn
     except Exception as e:
-        print(f"Error de conexión: {e}")
+        logger.error(f"Database connection error: {e}")
         return None
 
 def login_required(f):
@@ -83,7 +95,7 @@ def login():
                 return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
     except Exception as e:
-        print(f"Login error: {str(e)}")
+        logger.error(f"Login error: {str(e)}")
         return jsonify({"error": "Error interno del servidor"}), 500
 
 @app.route('/api/registro', methods=['POST'])
@@ -136,8 +148,10 @@ def get_vehicles():
                 vehicles = cur.fetchall()
                 return jsonify(vehicles)
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logger.error(f"Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('WEBSITES_PORT', 8000))
+    app.run(host='0.0.0.0', port=port)
+gunicorn --bind=0.0.0.0 --timeout 600 app:app
