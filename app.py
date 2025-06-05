@@ -27,11 +27,15 @@ app.config.update(
 
 def get_db_connection():
     try:
-        # Log connection attempt
         logger.info("Attempting to connect to database...")
         
-        # Get connection string from environment variable
         conn_string = os.getenv('SQL_CONNECTION_STRING')
+        
+        # Add default connection timeout and configure retry logic
+        if "Connection Timeout=" not in conn_string:
+            conn_string += ";Connection Timeout=30"
+        if "ConnectRetryCount=" not in conn_string:
+            conn_string += ";ConnectRetryCount=3;ConnectRetryInterval=10"
         
         # Add driver if not present
         if "Driver=" not in conn_string:
@@ -39,6 +43,7 @@ def get_db_connection():
         
         # Create connection using pyodbc
         conn = pyodbc.connect(conn_string)
+        conn.timeout = 30  # Set command timeout
         
         # Test connection
         with conn.cursor() as cur:
@@ -49,10 +54,10 @@ def get_db_connection():
         return conn
     except pyodbc.Error as e:
         logger.error(f"Database connection error: {e}")
-        return None
+        raise  # Raise the error instead of returning None
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
-        return None
+        raise  # Raise the error instead of returning None
 
 def login_required(f):
     @wraps(f)
@@ -96,18 +101,25 @@ def login():
         if not username or not password:
             return jsonify({"error": "Usuario y contraseña son requeridos"}), 400
 
-        with get_db_connection() as conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute("SELECT * FROM usuario WHERE username = %s", (username,))
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM usuario WHERE username = ?", (username,))
                 user = cur.fetchone()
 
-                if user and check_password_hash(user['password_hash'], password):
-                    session['user_id'] = user['id']
-                    session['username'] = user['username']
+                if user and check_password_hash(user.password_hash, password):
+                    session['user_id'] = user.id
+                    session['username'] = user.username
                     return jsonify({"message": "Login exitoso"}), 200
                 
                 return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+        finally:
+            if conn:
+                conn.close()
 
+    except pyodbc.Error as e:
+        logger.error(f"Database error: {str(e)}")
+        return jsonify({"error": "Error de conexión con la base de datos"}), 503
     except Exception as e:
         logger.error(f"Login error: {str(e)}")
         return jsonify({"error": "Error interno del servidor"}), 500
